@@ -1,0 +1,45 @@
+version: '3.9'
+services:
+  log-zookeeper:
+    image: bitnami/zookeeper:3.9
+    container_name: local-log-zookeeper
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
+    ports:
+      - '2182:2181'
+
+  log-kafka:
+    image: bitnami/kafka:latest
+    container_name: local-log-kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://log-kafka:9092
+      KAFKA_ZOOKEEPER_CONNECT: log-zookeeper:2181
+      KAFKA_ALLOW_PLAINTEXT_LISTENER: 'yes'
+    ports:
+      - '9093:9092'
+    depends_on:
+      - log-zookeeper
+
+  log-mongodb:
+    image: mongo:6.0
+    container_name: local-log-mongodb
+    ports:
+      - "27019:27017" # Mapped to 27019 locally to avoid conflict
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  log-service:
+    build: .
+    container_name: local-log-service
+    ports:
+      - '8085:8085' # Log service runs on 8085
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@log-mongodb:27017/logsdb?authSource=admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: log-kafka:9092
+      SPRING_KAFKA_CONSUMER_GROUP_ID: log-service-group
+    depends_on:
+      - log-kafka
+      - log-mongodb

@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  cart-redis:
+    image: redis:7.0-alpine
+    container_name: local-cart-redis
+    ports:
+      - "6380:6379" # Mapped to 6380 locally to avoid conflict with Product Redis
+
+  cart-service:
+    build: .
+    container_name: local-cart-service
+    ports:
+      - '8084:8084' # Cart service runs on 8084
+    environment:
+      SPRING_REDIS_HOST: cart-redis
+      SPRING_REDIS_PORT: 6379
+    depends_on:
+      - cart-redis

@@ -1,0 +1,25 @@
+server:
+  port: 8084 # The API Gateway routes /cart/** to port 8084
+
+spring:
+  application:
+    name: cart-service
+  
+  # Redis configuration for lightning-fast cart data caching
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0

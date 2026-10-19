@@ -1,0 +1,74 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # =====================================
+        # ROUTE 1: User Service
+        # =====================================
+        - id: user-service-route
+          uri: http://localhost:8081
+          predicates:
+            - Path=/users/v1/**
+          filters:
+            - AuthenticationFilter
+
+        # =====================================
+        # ROUTE 2: Product Service
+        # =====================================
+        - id: product-service-route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/products/v1/**
+          filters:
+            - AuthenticationFilter
+
+        # =====================================
+        # ROUTE 3: Order Service
+        # =====================================
+        - id: order-service-route
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - AuthenticationFilter
+
+        # =====================================
+        # ROUTE 4: Cart Service
+        # =====================================
+        - id: cart-service-route
+          uri: http://localhost:8084
+          predicates:
+            - Path=/cart/v1/**
+          filters:
+            - AuthenticationFilter
+        
+        # =====================================
+        # ROUTE 5: Log Service
+        # =====================================
+
+        - id : log-service-route
+          uri: http://localhost:8085
+          predicates:
+            - Path=/logs/v1/**
+          filters:
+            - AuthenticationFilter
+
+# =====================================
+# OBSERVABILITY & METRICS
+# =====================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0

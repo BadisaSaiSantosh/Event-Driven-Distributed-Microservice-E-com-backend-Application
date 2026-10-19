@@ -1,0 +1,49 @@
+version: '3.9'
+services:
+  order-zookeeper:
+    image: bitnami/zookeeper:3.9
+    container_name: local-order-zookeeper
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
+    ports:
+      - '2181:2181'
+
+  order-kafka:
+    image: bitnami/kafka:latest
+    container_name: local-order-kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://order-kafka:9092
+      KAFKA_ZOOKEEPER_CONNECT: order-zookeeper:2181
+      KAFKA_ALLOW_PLAINTEXT_LISTENER: 'yes'
+    ports:
+      - '9092:9092'
+    depends_on:
+      - order-zookeeper
+
+  order-postgres:
+    image: postgres:15
+    container_name: local-order-postgres
+    environment:
+      POSTGRES_DB: ordersdb
+      POSTGRES_USER: orderuser
+      POSTGRES_PASSWORD: orderpass
+    ports:
+      - '5432:5432'
+
+  order-service:
+    build: .
+    container_name: local-order-service
+    ports:
+      - '8083:8080' # Maps localhost:8083 to container port 8080
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://order-postgres:5432/ordersdb
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_DATASOURCE_USERNAME: orderuser
+      SPRING_DATASOURCE_PASSWORD: orderpass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: order-kafka:9092
+    depends_on:
+      - order-kafka
+      - order-postgres

@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  product-mongodb:
+    image: mongo:6.0
+    container_name: local-product-mongodb
+    ports:
+      - "27018:27017" 
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  product-redis:
+    image: redis:7.0-alpine
+    container_name: local-product-redis
+    ports:
+      - "6379:6379"
+
+  product-service:
+    build: .
+    container_name: local-product-service
+    ports:
+      - '8082:8082'
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@product-mongodb:27017/productdb?authSource=admin
+      SPRING_REDIS_HOST: product-redis
+      SPRING_REDIS_PORT: 6379
+    depends_on:
+      - product-mongodb
+      - product-redis
